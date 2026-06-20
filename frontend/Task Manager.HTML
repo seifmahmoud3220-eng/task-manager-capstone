@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Task Manager</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .container {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 12px;
+      width: 350px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.5);
+    }
+
+    h1 {
+      text-align: center;
+      color: #38bdf8;
+    }
+
+    input {
+      width: 70%;
+      padding: 8px;
+      border: none;
+      border-radius: 6px;
+    }
+
+    button {
+      padding: 8px 10px;
+      border: none;
+      border-radius: 6px;
+      background: #38bdf8;
+      color: black;
+      cursor: pointer;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+      margin-top: 15px;
+    }
+
+    li {
+      background: #334155;
+      margin: 5px 0;
+      padding: 8px;
+      border-radius: 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .delete {
+      background: red;
+      color: white;
+      border: none;
+      padding: 5px;
+      border-radius: 5px;
+    }
+
+    .done {
+      background: green;
+      color: white;
+      border: none;
+      padding: 5px;
+      border-radius: 5px;
+      margin-right: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+  <h1>Task Manager</h1>
+
+  <input id="taskInput" placeholder="Enter task">
+  <button onclick="addTask()">Add</button>
+
+  <ul id="taskList"></ul>
+</div>
+
+<script>
+const API = "http://localhost:5000/tasks";
+let tasks = [];
+
+async function loadTasks() {
+  const res = await fetch(API);
+  tasks = await res.json();
+  render();
+}
+
+function render() {
+  document.getElementById("taskList").innerHTML =
+    tasks.map(t => `
+      <li>
+        <span style="text-decoration:${t.completed ? 'line-through' : 'none'}">
+          ${t.title}
+        </span>
+
+        <div>
+          <button class="done" onclick="toggleTask('${t._id}', ${t.completed})">✔</button>
+          <button class="delete" onclick="deleteTask('${t._id}')">X</button>
+        </div>
+      </li>
+    `).join("");
+}
+
+async function addTask() {
+  const input = document.getElementById("taskInput");
+
+  await fetch(API, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ title: input.value })
+  });
+
+  input.value = "";
+  loadTasks();
+}
+
+async function deleteTask(id) {
+  await fetch(`${API}/${id}`, { method: "DELETE" });
+  loadTasks();
+}
+
+async function toggleTask(id, completed) {
+  await fetch(`${API}/${id}`, {
+    method: "PUT",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({ completed: !completed })
+  });
+
+  loadTasks();
+}
+
+loadTasks();
+</script>
+
+</body>
+</html>
